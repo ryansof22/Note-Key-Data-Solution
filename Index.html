@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,fill,GRAD@24,400,0,0" />
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root { --primary: #1a73e8; --bg: #f8f9fa; --card: #ffffff; --text: #333333; }
+    body.dark-mode { --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; }
+    body { font-family: 'Segoe UI', sans-serif; margin: 0; background: var(--bg); color: var(--text); padding-bottom: 80px; transition: 0.3s; }
+    
+    /* Splash Screen Styles */
+    #splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.5s; }
+    .splash-logo { width: 100px; animation: pulse 2s infinite; }
+    @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+    .header { background: var(--card); padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top:0; z-index:100; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    .logo-box { display: flex; align-items: center; gap: 10px; }
+    .logo-img { width: 32px; height: 32px; object-fit: contain; }
+    .app-title { font-weight: 800; font-size: 18px; color: var(--primary); }
+    .icon-notif { width: 24px; height: 24px; cursor: pointer; }
+
+    .page { display: none; padding: 15px; animation: fadeIn 0.3s; }
+    .active-page { display: block; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    
+    .card { background: var(--card); padding: 15px; border-radius: 16px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.03); position: relative; }
+    input, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #eee; border-radius: 12px; box-sizing: border-box; background: var(--card); color: var(--text); }
+    button { background: var(--primary); color: white; border: none; font-weight: bold; cursor: pointer; }
+    
+    .nav { position: fixed; bottom: 0; width: 100%; background: var(--card); display: flex; padding: 10px 0; border-top: 1px solid #eee; z-index: 1000; }
+    .nav-item { flex: 1; text-align: center; color: #aaa; font-size: 10px; cursor: pointer; }
+    .nav-item.active { color: var(--primary); }
+    
+    .medal-icon { width: 20px; vertical-align: middle; margin-right: 8px; }
+    .telegram-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #0088cc; color: white; text-decoration: none; padding: 12px; border-radius: 12px; font-weight: bold; margin-top: 10px; }
+    
+    #modal, #modalQRIS { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:2000; padding:20px; box-sizing:border-box; }
+    .noti-badge { position: absolute; top: 10px; right: 10px; background: red; width: 8px; height: 8px; border-radius: 50%; display: none; }
+  </style>
+</head>
+<body>
+
+  <div id="splash">
+    <img src="https://lh3.googleusercontent.com/d/1APtz_zRWlCP0H7QVunneeVmmqKZquO9E" class="splash-logo">
+    <h1 style="color: #1a73e8; margin-top: 20px;">Note_Key</h1>
+    <p style="color: #666; font-size: 14px; text-align: center; padding: 0 30px;">
+      Solusi cerdas manajemen UMKM.<br>
+      Mengamankan data langsung di Google Drive Anda.
+    </p>
+    <div id="loading" style="margin-top: 30px;">
+      <small>Menyiapkan ruang kerja Anda...</small>
+    </div>
+  </div>
+
+  <div class="header">
+    <div class="logo-box">
+      <img src="https://lh3.googleusercontent.com/d/1APtz_zRWlCP0H7QVunneeVmmqKZquO9E" class="logo-img">
+      <span class="app-title">Note_Key</span>
+    </div>
+    <div style="position:relative">
+      <img src="https://lh3.googleusercontent.com/d/1isIU5laTKqH27P9qUnSlGQyVqw8Fq7l_" class="icon-notif" onclick="bukaNotif()">
+      <div id="badge" class="noti-badge"></div>
+    </div>
+  </div>
+
+  <div id="pBeranda" class="page active-page">
+    <div class="card" style="background:var(--primary); color:white">
+      <small>Total Penjualan Hari Ini</small>
+      <h2 id="dispOmzet" style="margin:5px 0">Rp 0</h2>
+    </div>
+    <div class="card">
+      <div style="display:flex; align-items:center">
+        <img src="https://lh3.googleusercontent.com/d/1fkBTHCsDmwYBaJybw9FEnHS5FeXxDTgv" class="medal-icon">
+        <strong id="dispBest">Terlaris: (none)</strong>
+      </div>
+      <p id="dispSaran" style="font-size:12px; opacity:0.7">Menganalisis data...</p>
+    </div>
+    <div class="card">
+      <h4>Transaksi</h4>
+      <select id="tNama" onchange="setHrg()"><option value="">-- Pilih Barang --</option></select>
+      <input type="number" id="tHrg" placeholder="Harga" readonly>
+      <input type="number" id="tQty" placeholder="Jumlah">
+      <select id="tMetode"><option value="Tunai">Tunai</option><option value="QRIS">QRIS</option></select>
+      <button onclick="simpanTx()" id="btnTx">SIMPAN TRANSAKSI</button>
+    </div>
+  </div>
+
+  <div id="pBarang" class="page">
+    <div style="display:flex; justify-content:space-between; align-items:center">
+      <h3>Stok Barang</h3>
+      <button onclick="bukaM('modal')" style="width:auto; padding:8px 15px">+ Produk</button>
+    </div>
+    <div id="listBarang"></div>
+  </div>
+
+  <div id="pLaporan" class="page">
+    <h3>Laporan Penjualan</h3>
+    <div class="card">
+      <div style="height:200px"><canvas id="myChart"></canvas></div>
+    </div>
+    <div id="listLaporan"></div>
+  </div>
+
+  <div id="pAkun" class="page">
+    <div id="bizCard" class="card" style="background:linear-gradient(135deg, #1a73e8, #00d4ff); color:white; text-align:center">
+      <h2 id="kbNama" style="margin-bottom:0">Nama Toko</h2>
+      <p id="kbAlamat" style="font-size:12px">Alamat Toko</p>
+      <div style="background:white; padding:10px; display:inline-block; border-radius:12px; margin:10px 0">
+        <img id="kbQR" style="width:120px; height:120px; display:none">
+        <small id="kbNoQR" style="color:#888">QRIS Belum Ada</small>
+      </div>
+      <p style="font-size:10px">Scan untuk Bayar | WA: <span id="kbWA">-</span></p>
+    </div>
+
+    <div class="card">
+      <h4>Profil Toko</h4>
+      <input id="profNama" placeholder="Nama Pemilik">
+      <input id="profToko" placeholder="Nama Usaha">
+      <input id="profAlamat" placeholder="Alamat">
+      <input id="profWA" placeholder="WhatsApp (628...)">
+      <button onclick="saveProf()">UPDATE PROFIL</button>
+    </div>
+
+    <div class="card">
+      <h4>Media QRIS & Bantuan</h4>
+      <input type="file" id="inpQR" accept="image/*">
+      <button onclick="upQR()" style="background:#ff9800">UPLOAD QRIS</button>
+      <a href="https://t.me/ryan_key" target="_blank" class="telegram-btn">
+        <img src="https://lh3.googleusercontent.com/d/1S61_eqH-dOcCWG95JDKj-gngV3ooZFK1" style="width:20px"> 
+        Hubungi Customer Service
+      </a>
+    </div>
+  </div>
+
+  <div id="modalQRIS">
+    <div style="text-align:center; padding-top:50px">
+      <h3 style="color:white">Silahkan Scan</h3>
+      <img id="qrisShow" style="width:100%; max-width:280px; border-radius:15px; border:5px solid white">
+      <button onclick="finTx()" style="background:#34a853; margin-top:20px">SUDAH BAYAR</button>
+    </div>
+  </div>
+
+  <div id="modal">
+    <div class="card" style="margin-top:50px">
+      <h4>Produk Baru</h4>
+      <input id="iNama" placeholder="Nama Barang">
+      <input id="iHrg" type="number" placeholder="Harga Jual">
+      <input id="iStok" type="number" placeholder="Stok Jual">
+      <input type="file" id="iFoto" accept="image/*">
+      <button onclick="saveBrg()">SIMPAN BARANG</button>
+      <button onclick="tutupM('modal')" style="background:#ccc">BATAL</button>
+    </div>
+  </div>
+
+  <div class="nav">
+  <div class="nav-item active" onclick="nav('pBeranda', this)"><span class="material-symbols-rounded">Home</span><br>____</div>
+  <div class="nav-item" onclick="nav('pBarang', this)"><span class="material-symbols-rounded">Items</span><br>___</div>
+  <div class="nav-item" onclick="nav('pLaporan', this)"><span class="material-symbols-rounded">Activity</span><br>____</div>
+  <div class="nav-item" onclick="nav('pAkun', this)"><span class="material-symbols-rounded">Account</span><br>____</div>
+</div>
+
+  <script>
+    let currentBrg = [];
+    let myChart = null;
+    let dataLaporanGlobal = [];
+
+    window.onload = init;
+
+    function init() {
+      google.script.run.withSuccessHandler(p => {
+        // Hilangkan Splash Screen setelah data terload
+        setTimeout(() => {
+          document.getElementById('splash').style.opacity = '0';
+          setTimeout(() => { document.getElementById('splash').style.display = 'none'; }, 500);
+        }, 1000);
+
+        if(p) {
+          document.getElementById('kbNama').innerText = p.namaUsaha;
+          document.getElementById('kbAlamat').innerText = p.alamat;
+          document.getElementById('kbWA').innerText = p.noTelp;
+          document.getElementById('profNama').value = p.namaLengkap;
+          document.getElementById('profToko').value = p.namaUsaha;
+          document.getElementById('profAlamat').value = p.alamat;
+          document.getElementById('profWA').value = p.noTelp;
+          if(p.qrisId) {
+            let url = "https://drive.google.com/thumbnail?id="+p.qrisId+"&sz=w400";
+            document.getElementById('kbQR').src = url; document.getElementById('kbQR').style.display='inline';
+            document.getElementById('kbNoQR').style.display='none';
+            document.getElementById('qrisShow').src = url;
+          }
+        }
+      }).ambilProfilBisnis();
+      muatBarang(); muatLaporan(); muatSmart();
+    }
+
+    function nav(id, el) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
+      document.getElementById(id).classList.add('active-page');
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function toggleDark() { document.body.classList.toggle('dark-mode'); }
+
+    function muatBarang() {
+      google.script.run.withSuccessHandler(res => {
+        currentBrg = res;
+        document.getElementById('tNama').innerHTML = '<option value="">-- Pilih --</option>' + res.map(i => `<option value="${i.nama}">${i.nama}</option>`).join('');
+        document.getElementById('listBarang').innerHTML = res.map(i => `
+          <div class="card" style="display:flex; align-items:center; gap:10px; padding:10px">
+            <img src="${i.fotoUrl}" style="width:50px; height:50px; border-radius:8px; object-fit:cover">
+            <div style="flex:1">
+              <strong>${i.nama}</strong><br>
+              <small>Rp ${Number(i.harga).toLocaleString()} | Stok: <span style="color:${i.stok <= 5 ? 'red' : 'inherit'}">${i.stok}</span></small>
+            </div>
+            <span class="material-symbols-rounded" onclick="delB('${i.nama}','${i.fileId}')" style="color:red; cursor:pointer">delete</span>
+          </div>
+        `).join('');
+        document.getElementById('badge').style.display = res.some(i => i.stok <= 5) ? 'block' : 'none';
+      }).ambilDaftarBarang();
+    }
+
+    function setHrg() {
+      let b = currentBrg.find(x => x.nama == document.getElementById('tNama').value);
+      if(b) document.getElementById('tHrg').value = b.harga;
+    }
+
+    function simpanTx() {
+      let d = { nama_produk: document.getElementById('tNama').value, jumlah: document.getElementById('tQty').value, harga_satuan: document.getElementById('tHrg').value, metode_pembayaran: document.getElementById('tMetode').value };
+      if(!d.nama_produk || !d.jumlah) return Swal.fire('Oops!', 'Lengkapi data transaksi.', 'warning');
+      
+      Swal.fire({ title: 'Memproses...', didOpen: () => { Swal.showLoading(); } });
+      google.script.run.withSuccessHandler(() => {
+        Swal.close();
+        if(d.metode_pembayaran == "QRIS") bukaM('modalQRIS'); else finTx();
+      }).prosesDataDariHTML(d);
+    }
+
+    function finTx() {
+      tutupM('modalQRIS');
+      Swal.fire({ title: 'Berhasil!', text: 'Transaksi dicatat.', icon: 'success', timer: 1500, showConfirmButton: false });
+      document.getElementById('tQty').value = "";
+      init();
+    }
+
+    function muatLaporan() {
+      google.script.run.withSuccessHandler(res => {
+        dataLaporanGlobal = res;
+        let omzetHariIni = 0;
+        document.getElementById('listLaporan').innerHTML = res.map(i => {
+          if (i.isHariIni) omzetHariIni += i.total;
+          return `<div style="display:flex; justify-content:space-between; padding:10px; border-bottom:1px solid #eee">
+            <div><small>${i.tglStr}</small><br><strong>${i.produk}</strong></div>
+            <div style="text-align:right">Rp ${i.total.toLocaleString()}<br><small>${i.metode} (x${i.qty})</small></div>
+          </div>`;
+        }).join('');
+        document.getElementById('dispOmzet').innerText = "Rp " + omzetHariIni.toLocaleString();
+        muatGrafik();
+      }).ambilDataLaporan();
+    }
+
+    function muatGrafik() {
+      let grouped = {};
+      dataLaporanGlobal.forEach(i => {
+        if(i.isHariIni) grouped[i.produk] = (grouped[i.produk] || 0) + i.total;
+      });
+      const ctx = document.getElementById('myChart').getContext('2d');
+      if (myChart) myChart.destroy();
+      myChart = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(grouped),
+          datasets: [{ data: Object.values(grouped), backgroundColor: ['#1a73e8', '#34a853', '#ff9800', '#d93025', '#9c27b0'] }]
+        },
+        options: { maintainAspectRatio: false, cutout: '70%' }
+      });
+    }
+
+    function muatSmart() {
+      google.script.run.withSuccessHandler(r => {
+        document.getElementById('dispBest').innerText = "Terlaris: " + r.terlaris;
+        document.getElementById('dispSaran').innerText = r.saran;
+      }).ambilAnalisisBisnis();
+    }
+
+    function saveProf() {
+      let d = { namaLengkap: document.getElementById('profNama').value, namaUsaha: document.getElementById('profToko').value, alamat: document.getElementById('profAlamat').value, noTelp: document.getElementById('profWA').value, emailBisnis: "" };
+      google.script.run.withSuccessHandler(m => { Swal.fire('Sukses!', m, 'success'); init(); }).simpanProfilBisnis(d);
+    }
+
+    function upQR() {
+      let f = document.getElementById('inpQR').files[0];
+      if(!f) return;
+      let r = new FileReader();
+      r.onload = e => {
+        Swal.fire({ title: 'Mengunggah...', didOpen: () => { Swal.showLoading(); } });
+        google.script.run.withSuccessHandler(res => {
+          Swal.fire('Sukses!', res.msg, 'success');
+          init();
+        }).uploadQRIS({ imageContent: e.target.result });
+      };
+      r.readAsDataURL(f);
+    }
+
+  function saveBrg() {
+  let f = document.getElementById('iFoto').files[0];
+  let n = document.getElementById('iNama').value;
+  let h = document.getElementById('iHrg').value;
+  let s = document.getElementById('iStok').value;
+
+  if(!f || !n || !h) return Swal.fire('Oops!', 'Mohon lengkapi data dan foto.', 'warning');
+
+  Swal.fire({ 
+    title: 'Menyimpan...', 
+    text: 'Mohon tunggu sebentar',
+    allowOutsideClick: false, 
+    didOpen: () => { Swal.showLoading(); } 
+  });
+
+  let r = new FileReader();
+  r.onload = e => {
+    let d = { 
+      namaProduk: n, 
+      hargaProduk: h, 
+      stokProduk: s, 
+      imageContent: e.target.result, 
+      imageName: f.name,
+      contentType: f.type
+    };
+    
+    google.script.run.withSuccessHandler(m => {
+      // Tunggu 500ms tambahan sebelum refresh data untuk stabilitas
+      setTimeout(() => {
+        muatBarang(); // Refresh daftar barang
+        Swal.fire('Sukses!', m, 'success');
+        tutupM('modal');
+        // Reset input
+        document.getElementById('iNama').value = "";
+        document.getElementById('iHrg').value = "";
+        document.getElementById('iStok').value = "";
+        document.getElementById('iFoto').value = "";
+      }, 500);
+    }).uploadProduk(d);
+  };
+  r.readAsDataURL(f);
+}
+
+    function delB(n, id) { 
+      Swal.fire({ title: 'Hapus Produk?', text: n + " akan dihapus permanen.", icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Ya, Hapus!' }).then((result) => {
+        if (result.isConfirmed) google.script.run.withSuccessHandler(() => muatBarang()).hapusProduk(n, id);
+      });
+    }
+
+    function bukaNotif() {
+      Swal.fire({ title: 'Notifikasi', text: 'Stok menipis? Segera cek menu Barang!', icon: 'info' });
+    }
+
+    function bukaM(id) { document.getElementById(id).style.display='block'; }
+    function tutupM(id) { document.getElementById(id).style.display='none'; }
+  </script>
+</body>
+</html>
