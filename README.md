@@ -34,8 +34,7 @@ Agar aplikasi ini berjalan di akun Google Anda, ikuti langkah berikut:
 - **Cloud Storage:** Google Drive API
 
 ## 📧 Kontak & Portofolio
-- **LinkedIn:** [Ryan LinkedIn Profile]
-- **Email:** [Email Anda]
+- **LinkedIn:** https://www.linkedin.com/in/ryan-sofiyulloh/
 
 ---
 *Proyek ini dikembangkan sebagai bagian dari portofolio pengembangan solusi berbasis Data & AI.*
